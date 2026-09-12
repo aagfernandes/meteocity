@@ -19,8 +19,8 @@ class FakeWeatherClient:
         return self.result
 
 
-def slack_headers(body, secret):
-    timestamp = str(int(time.time()))
+def slack_headers(body, secret, timestamp=None):
+    timestamp = str(timestamp or int(time.time()))
     base_string = f"v0:{timestamp}:{body}".encode()
     signature = hmac.new(secret.encode(), base_string, hashlib.sha256).hexdigest()
     return {
@@ -74,6 +74,21 @@ def test_rejects_invalid_signature():
             "X-Slack-Request-Timestamp": str(int(time.time())),
             "X-Slack-Signature": "v0=invalid",
         },
+    )
+
+    assert response.status_code == 401
+
+
+def test_rejects_stale_signature():
+    app = create_app(weather_client=FakeWeatherClient(), signing_secret="test-secret")
+    body = "text=London"
+    timestamp = int(time.time()) - 301
+
+    response = app.test_client().post(
+        "/slack/weather",
+        data=body,
+        content_type="application/x-www-form-urlencoded",
+        headers=slack_headers(body, "test-secret", timestamp),
     )
 
     assert response.status_code == 401
