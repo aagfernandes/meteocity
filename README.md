@@ -70,6 +70,19 @@ Then test the command in Slack:
 
 Socket Mode is not required. The application returns the slash-command response directly and does not use a Bot User OAuth token.
 
+## Development validation
+
+Run the complete local validation suite with:
+
+```bash
+source .venv/bin/activate
+python -m pytest
+ruff check .
+ruff format --check .
+```
+
+GitHub Actions runs the same checks on pushes to `main` and `dev`, and on pull requests targeting `main`.
+
 ## Security
 
 - Keep `.env` local and ignored by Git.

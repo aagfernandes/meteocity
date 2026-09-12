@@ -79,9 +79,10 @@ def test_rejects_invalid_signature():
     assert response.status_code == 401
 
 
-def test_returns_not_found_message():
+def test_returns_not_found_message(monkeypatch):
+    monkeypatch.setenv("FLASK_TESTING", "true")
     client = FakeWeatherClient(error=CityNotFoundError())
-    app = create_app(weather_client=client, signing_secret="")
+    app = create_app(weather_client=client)
 
     response = app.test_client().post("/slack/weather", data={"text": "Atlantis"})
 

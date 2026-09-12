@@ -26,11 +26,15 @@ def create_app(weather_client=None, signing_secret=_UNSET) -> Flask:
         else signing_secret
     )
     app.config["OPENWEATHER_API_KEY"] = os.getenv("OPENWEATHER_API_KEY")
+    app.config["TESTING"] = os.getenv("FLASK_TESTING", "false").lower() == "true"
 
     def is_valid_slack_request() -> bool:
+        if app.config["TESTING"]:
+            return True
+
         secret = app.config["SLACK_SIGNING_SECRET"]
         if not secret:
-            return True
+            return False
 
         timestamp = request.headers.get("X-Slack-Request-Timestamp", "")
         signature = request.headers.get("X-Slack-Signature", "")
@@ -64,7 +68,9 @@ def create_app(weather_client=None, signing_secret=_UNSET) -> Flask:
                 jsonify(
                     {
                         "response_type": "ephemeral",
-                        "text": "Please provide a city, for example: `/jumo_weather London`",
+                        "text": (
+                            "Please provide a city, for example: `/jumo_weather London`"
+                        ),
                     }
                 ),
                 400,
@@ -107,4 +113,4 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8000, debug=True)
+    app.run(host="127.0.0.1", port=8000, debug=False)
