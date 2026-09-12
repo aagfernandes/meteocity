@@ -90,6 +90,27 @@ pre-commit run --all-files
 
 GitHub Actions runs the same checks on pushes to `main` and `dev`, and on pull requests targeting `main`.
 
+## Validation coverage
+
+The tests cover successful weather responses, unknown cities, invalid API keys,
+timeouts, malformed weather responses, missing city input, and invalid or stale
+Slack signatures.
+
+For manual Slack testing, keep both processes running:
+
+```text
+Terminal 1: python app.py
+Terminal 2: ngrok http 8000
+```
+
+Use the active ngrok URL in the Slack Request URL, then run:
+
+```text
+/jumo_weather London
+```
+
+The ngrok process must remain active while Slack sends the request.
+
 ## Security
 
 - Keep `.env` local and ignored by Git.

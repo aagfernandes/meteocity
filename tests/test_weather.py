@@ -75,6 +75,16 @@ def test_maps_timeout(monkeypatch):
         OpenWeatherClient("test-key").get_current_weather("London")
 
 
+def test_rejects_malformed_weather_response(monkeypatch):
+    monkeypatch.setattr(
+        "weather.requests.get",
+        lambda *args, **kwargs: FakeResponse(200, {"name": "London"}),
+    )
+
+    with pytest.raises(WeatherServiceError, match="invalid"):
+        OpenWeatherClient("test-key").get_current_weather("London")
+
+
 def test_rejects_blank_city_before_request(monkeypatch):
     def fake_get(*args, **kwargs):
         pytest.fail("HTTP request should not be made")
