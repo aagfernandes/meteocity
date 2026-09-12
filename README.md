@@ -81,6 +81,13 @@ ruff check .
 ruff format --check .
 ```
 
+Install the pre-commit hook once per clone:
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
 GitHub Actions runs the same checks on pushes to `main` and `dev`, and on pull requests targeting `main`.
 
 ## Security
