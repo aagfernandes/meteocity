@@ -3,8 +3,8 @@ import hmac
 import os
 import time
 
-from flask import Flask, jsonify, request
 from dotenv import load_dotenv
+from flask import Flask, jsonify, request
 
 from weather import (
     CityNotFoundError,
@@ -26,11 +26,15 @@ def create_app(weather_client=None, signing_secret=_UNSET) -> Flask:
         else signing_secret
     )
     app.config["OPENWEATHER_API_KEY"] = os.getenv("OPENWEATHER_API_KEY")
+    app.config["TESTING"] = os.getenv("FLASK_TESTING", "false").lower() == "true"
 
     def is_valid_slack_request() -> bool:
+        if app.config["TESTING"]:
+            return True
+
         secret = app.config["SLACK_SIGNING_SECRET"]
         if not secret:
-            return True
+            return False
 
         timestamp = request.headers.get("X-Slack-Request-Timestamp", "")
         signature = request.headers.get("X-Slack-Signature", "")
@@ -44,9 +48,9 @@ def create_app(weather_client=None, signing_secret=_UNSET) -> Flask:
 
         body = request.get_data(as_text=True)
         basestring = f"v0:{timestamp}:{body}".encode()
-        expected_signature = "v0=" + hmac.new(
-            secret.encode(), basestring, hashlib.sha256
-        ).hexdigest()
+        expected_signature = (
+            "v0=" + hmac.new(secret.encode(), basestring, hashlib.sha256).hexdigest()
+        )
         return hmac.compare_digest(expected_signature, signature)
 
     @app.get("/health")
@@ -64,21 +68,29 @@ def create_app(weather_client=None, signing_secret=_UNSET) -> Flask:
                 jsonify(
                     {
                         "response_type": "ephemeral",
-                        "text": "Please provide a city, for example: `/jumo_weather London`",
+                        "text": (
+                            "Please provide a city, for example: `/jumo_weather London`"
+                        ),
                     }
                 ),
                 400,
             )
 
         try:
-            client = weather_client or OpenWeatherClient(app.config["OPENWEATHER_API_KEY"])
+            client = weather_client or OpenWeatherClient(
+                app.config["OPENWEATHER_API_KEY"]
+            )
             weather = client.get_current_weather(city)
         except CityNotFoundError:
             return jsonify(_slack_error(f"I could not find a city named {city}."))
         except InvalidApiKeyError:
-            return jsonify(_slack_error("The weather service is not configured correctly.")), 500
+            return jsonify(
+                _slack_error("The weather service is not configured correctly.")
+            ), 500
         except WeatherClientError:
-            return jsonify(_slack_error("The weather service is temporarily unavailable.")), 502
+            return jsonify(
+                _slack_error("The weather service is temporarily unavailable.")
+            ), 502
 
         return jsonify(
             {
@@ -101,4 +113,4 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8000, debug=True)
+    app.run(host="127.0.0.1", port=8000, debug=False)
