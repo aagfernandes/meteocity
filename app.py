@@ -16,9 +16,10 @@ from weather import (
 load_dotenv()
 
 _UNSET = object()
+MAX_CITY_LENGTH = 40
 
 
-def create_app(weather_client=None, signing_secret=_UNSET) -> Flask:
+def create_app(weather_client=None, signing_secret=_UNSET, testing=False) -> Flask:
     app = Flask(__name__)
     app.config["SLACK_SIGNING_SECRET"] = (
         os.getenv("SLACK_SIGNING_SECRET")
@@ -26,7 +27,7 @@ def create_app(weather_client=None, signing_secret=_UNSET) -> Flask:
         else signing_secret
     )
     app.config["OPENWEATHER_API_KEY"] = os.getenv("OPENWEATHER_API_KEY")
-    app.config["TESTING"] = os.getenv("FLASK_TESTING", "false").lower() == "true"
+    app.config["TESTING"] = testing
 
     def is_valid_slack_request() -> bool:
         if app.config["TESTING"]:
@@ -75,6 +76,12 @@ def create_app(weather_client=None, signing_secret=_UNSET) -> Flask:
                 ),
                 400,
             )
+        if len(city) > MAX_CITY_LENGTH:
+            return jsonify(
+                _slack_error(
+                    f"Please provide a city with {MAX_CITY_LENGTH} characters or fewer."
+                )
+            ), 400
 
         try:
             client = weather_client or OpenWeatherClient(

@@ -32,7 +32,7 @@ class OpenWeatherClient:
         api_key: str,
         *,
         base_url: str = "https://api.openweathermap.org/data/2.5/weather",
-        timeout: float = 5.0,
+        timeout: float = 2.0,
     ):
         if not api_key:
             raise InvalidApiKeyError("An OpenWeather API key is required")

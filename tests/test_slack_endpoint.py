@@ -64,6 +64,21 @@ def test_rejects_missing_city():
     assert "provide a city" in response.get_json()["text"]
 
 
+def test_rejects_city_longer_than_maximum():
+    client = FakeWeatherClient()
+    app = create_app(weather_client=client, testing=True)
+    city = "a" * 41
+
+    response = app.test_client().post("/slack/weather", data={"text": city})
+
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "response_type": "ephemeral",
+        "text": "Please provide a city with 40 characters or fewer.",
+    }
+    assert client.requested_city is None
+
+
 def test_rejects_invalid_signature():
     app = create_app(weather_client=FakeWeatherClient(), signing_secret="test-secret")
 
@@ -75,6 +90,14 @@ def test_rejects_invalid_signature():
             "X-Slack-Signature": "v0=invalid",
         },
     )
+
+    assert response.status_code == 401
+
+
+def test_rejects_unsigned_request_without_signing_secret():
+    app = create_app(weather_client=FakeWeatherClient(), signing_secret="")
+
+    response = app.test_client().post("/slack/weather", data={"text": "London"})
 
     assert response.status_code == 401
 
@@ -94,10 +117,9 @@ def test_rejects_stale_signature():
     assert response.status_code == 401
 
 
-def test_returns_not_found_message(monkeypatch):
-    monkeypatch.setenv("FLASK_TESTING", "true")
+def test_returns_not_found_message():
     client = FakeWeatherClient(error=CityNotFoundError())
-    app = create_app(weather_client=client)
+    app = create_app(weather_client=client, testing=True)
 
     response = app.test_client().post("/slack/weather", data={"text": "Atlantis"})
 
