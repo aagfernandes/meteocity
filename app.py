@@ -18,7 +18,7 @@ load_dotenv()
 _UNSET = object()
 
 
-def create_app(weather_client=None, signing_secret=_UNSET) -> Flask:
+def create_app(weather_client=None, signing_secret=_UNSET, testing=False) -> Flask:
     app = Flask(__name__)
     app.config["SLACK_SIGNING_SECRET"] = (
         os.getenv("SLACK_SIGNING_SECRET")
@@ -26,7 +26,7 @@ def create_app(weather_client=None, signing_secret=_UNSET) -> Flask:
         else signing_secret
     )
     app.config["OPENWEATHER_API_KEY"] = os.getenv("OPENWEATHER_API_KEY")
-    app.config["TESTING"] = os.getenv("FLASK_TESTING", "false").lower() == "true"
+    app.config["TESTING"] = testing
 
     def is_valid_slack_request() -> bool:
         if app.config["TESTING"]:

@@ -79,6 +79,14 @@ def test_rejects_invalid_signature():
     assert response.status_code == 401
 
 
+def test_rejects_unsigned_request_without_signing_secret():
+    app = create_app(weather_client=FakeWeatherClient(), signing_secret="")
+
+    response = app.test_client().post("/slack/weather", data={"text": "London"})
+
+    assert response.status_code == 401
+
+
 def test_rejects_stale_signature():
     app = create_app(weather_client=FakeWeatherClient(), signing_secret="test-secret")
     body = "text=London"
@@ -94,10 +102,9 @@ def test_rejects_stale_signature():
     assert response.status_code == 401
 
 
-def test_returns_not_found_message(monkeypatch):
-    monkeypatch.setenv("FLASK_TESTING", "true")
+def test_returns_not_found_message():
     client = FakeWeatherClient(error=CityNotFoundError())
-    app = create_app(weather_client=client)
+    app = create_app(weather_client=client, testing=True)
 
     response = app.test_client().post("/slack/weather", data={"text": "Atlantis"})
 
