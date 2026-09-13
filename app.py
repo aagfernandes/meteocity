@@ -16,6 +16,7 @@ from weather import (
 load_dotenv()
 
 _UNSET = object()
+MAX_CITY_LENGTH = 40
 
 
 def create_app(weather_client=None, signing_secret=_UNSET, testing=False) -> Flask:
@@ -75,6 +76,12 @@ def create_app(weather_client=None, signing_secret=_UNSET, testing=False) -> Fla
                 ),
                 400,
             )
+        if len(city) > MAX_CITY_LENGTH:
+            return jsonify(
+                _slack_error(
+                    f"Please provide a city with {MAX_CITY_LENGTH} characters or fewer."
+                )
+            ), 400
 
         try:
             client = weather_client or OpenWeatherClient(

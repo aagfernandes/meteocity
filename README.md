@@ -94,7 +94,8 @@ GitHub Actions runs the same checks on pushes to `main` and `dev`, and on pull r
 
 The tests cover successful weather responses, unknown cities, invalid API keys,
 timeouts, malformed weather responses, missing city input, and invalid or stale
-Slack signatures.
+Slack signatures. Slack city input is limited to 40 characters before an
+OpenWeather request is made.
 
 For manual Slack testing, keep both processes running:
 

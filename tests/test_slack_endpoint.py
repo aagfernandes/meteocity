@@ -64,6 +64,21 @@ def test_rejects_missing_city():
     assert "provide a city" in response.get_json()["text"]
 
 
+def test_rejects_city_longer_than_maximum():
+    client = FakeWeatherClient()
+    app = create_app(weather_client=client, testing=True)
+    city = "a" * 41
+
+    response = app.test_client().post("/slack/weather", data={"text": city})
+
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "response_type": "ephemeral",
+        "text": "Please provide a city with 40 characters or fewer.",
+    }
+    assert client.requested_city is None
+
+
 def test_rejects_invalid_signature():
     app = create_app(weather_client=FakeWeatherClient(), signing_secret="test-secret")
 
