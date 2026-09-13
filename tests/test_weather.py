@@ -23,7 +23,7 @@ def test_returns_current_weather(monkeypatch):
     def fake_get(url, *, params, timeout):
         assert url.endswith("/weather")
         assert params == {"q": "London", "appid": "test-key", "units": "metric"}
-        assert timeout == 5.0
+        assert timeout == 2.0
         return FakeResponse(
             200,
             {
